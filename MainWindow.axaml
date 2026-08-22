@@ -1,0 +1,102 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="DockApp.Avalonia.MainWindow"
+        Title="DockApp.Avalonia"
+        WindowStartupLocation="CenterScreen"
+        TransparencyLevelHint= "AcrylicBlur"
+        Background="Transparent"
+        PointerPressed="OnPointerPressed">
+
+    <!-- Outer Border encapsulating the layout with native Padding -->
+    <Border Padding="13"
+            CornerRadius="15"
+            Background="#80101015"
+            BorderBrush="#30FFFFFF" 
+            BorderThickness="1">
+
+        
+            
+            <!-- Main Floating Glass Container -->
+            <Grid RowDefinitions="*,*"
+                    ColumnDefinitions="*,*,*"
+                    Margin="8">
+
+                <!-- Row 1 -->
+                <Border Grid.Row="0"
+                        Grid.Column="0"
+                        CornerRadius="12"
+                        Background="#20FFFFFF"
+                        Margin="4">
+
+                    <TextBlock Text="App 1"
+                                Foreground="White"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"/>
+                </Border>
+
+                <Border Grid.Row="0"
+                        Grid.Column="1"
+                        CornerRadius="12"
+                        Background="#20FFFFFF"
+                        Margin="4">
+
+                     <TextBlock Text="App 1"
+                                Foreground="White"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"/>
+
+                </Border>
+
+                <Border Grid.Row="0"
+                        Grid.Column="2"
+                        CornerRadius="12"
+                        Background="#20FFFFFF"
+                        Margin="4">
+
+                    <TextBlock Text="App 3"
+                                Foreground="White"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"/>
+                </Border>
+
+
+                <!-- Row 2 -->
+                <Border Grid.Row="1"
+                        Grid.Column="0"
+                        CornerRadius="12"
+                        Background="#20FFFFFF"
+                        Margin="4">
+
+                    <TextBlock Text="App 4"
+                                Foreground="White"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"/>
+                </Border>
+
+                <Border Grid.Row="1"
+                        Grid.Column="1"
+                        CornerRadius="12"
+                        Background="#20FFFFFF"
+                        Margin="4">
+
+                    <TextBlock Text="App 5"
+                                Foreground="White"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"/>
+                </Border>
+
+                <Border Grid.Row="1"
+                        Grid.Column="2"
+                        CornerRadius="12"
+                        Background="#20FFFFFF"
+                        Margin="4">
+
+                    <TextBlock Text="App 6"
+                                Foreground="White"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"/>
+                </Border>
+            </Grid>
+        
+    </Border>
+</Window>
