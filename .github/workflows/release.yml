@@ -47,7 +47,7 @@ jobs:
           Compress-Archive `
             -Path "publish\*" `
             -DestinationPath "DockApp-win-x64.zip"
-
+            s
       - name: Install Inno Setup
         shell: pwsh
         run: |

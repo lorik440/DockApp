@@ -1,0 +1,2632 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+.gitattributes
+.github/workflows/release.yml
+.gitignore
+App.axaml
+App.axaml.cs
+app.manifest
+DockApp.Avalonia.csproj
+installer/DockApp.iis
+MainWindow.axaml
+MainWindow.axaml.cs
+Models/AppInfo.cs
+Program.cs
+README.md
+Services/AppActivityService.cs
+Services/AppService.cs
+Services/ForegroundAppInfo.cs
+Services/StartupService.cs
+Services/UsageService.cs
+Services/WindowService.cs
+Windows/DesktopGrid.cs
+Windows/NativeWindowHook.cs
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path=".gitattributes">
+###############################################################################
+# Set default behavior to automatically normalize line endings.
+###############################################################################
+* text=auto
+
+###############################################################################
+# Set default behavior for command prompt diff.
+#
+# This is need for earlier builds of msysgit that does not have it on by
+# default for csharp files.
+# Note: This is only used by command line
+###############################################################################
+#*.cs     diff=csharp
+
+###############################################################################
+# Set the merge driver for project and solution files
+#
+# Merging from the command prompt will add diff markers to the files if there
+# are conflicts (Merging from VS is not affected by the settings below, in VS
+# the diff markers are never inserted). Diff markers may cause the following 
+# file extensions to fail to load in VS. An alternative would be to treat
+# these files as binary and thus will always conflict and require user
+# intervention with every merge. To do so, just uncomment the entries below
+###############################################################################
+#*.sln       merge=binary
+#*.csproj    merge=binary
+#*.vbproj    merge=binary
+#*.vcxproj   merge=binary
+#*.vcproj    merge=binary
+#*.dbproj    merge=binary
+#*.fsproj    merge=binary
+#*.lsproj    merge=binary
+#*.wixproj   merge=binary
+#*.modelproj merge=binary
+#*.sqlproj   merge=binary
+#*.wwaproj   merge=binary
+
+###############################################################################
+# behavior for image files
+#
+# image files are treated as binary by default.
+###############################################################################
+#*.jpg   binary
+#*.png   binary
+#*.gif   binary
+
+###############################################################################
+# diff behavior for common document formats
+# 
+# Convert binary document formats to text before diffing them. This feature
+# is only available from the command line. Turn it on by uncommenting the 
+# entries below.
+###############################################################################
+#*.doc   diff=astextplain
+#*.DOC   diff=astextplain
+#*.docx  diff=astextplain
+#*.DOCX  diff=astextplain
+#*.dot   diff=astextplain
+#*.DOT   diff=astextplain
+#*.pdf   diff=astextplain
+#*.PDF   diff=astextplain
+#*.rtf   diff=astextplain
+#*.RTF   diff=astextplain
+</file>
+
+<file path=".github/workflows/release.yml">
+name: Release DockApp
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and Release DockApp
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.x"
+
+      - name: Get version
+        id: version
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Publish DockApp
+        run: >
+          dotnet publish
+          DockApp.Avalonia/DockApp.Avalonia.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -o publish
+
+      - name: Create portable ZIP
+        shell: pwsh
+        run: |
+          Compress-Archive `
+            -Path "publish\*" `
+            -DestinationPath "DockApp-win-x64.zip"
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
+            "/DVersion=${{ steps.version.outputs.VERSION }}" `
+            "installer\DockApp.iss"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            DockApp-win-x64.zip
+            installer-output/DockApp-Setup-v${{ steps.version.outputs.VERSION }}.exe
+          generate_release_notes: true
+</file>
+
+<file path=".gitignore">
+## Ignore Visual Studio temporary files, build results, and
+## files generated by popular Visual Studio add-ons.
+##
+## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# User-specific files (MonoDevelop/Xamarin Studio)
+*.userprefs
+
+# Mono auto generated files
+mono_crash.*
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio 2015/2017 cache/options directory
+.vs/
+# Uncomment if you have tasks that create the project's static files in wwwroot
+#wwwroot/
+
+# Visual Studio 2017 auto generated files
+Generated\ Files/
+
+# MSTest test Results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# NUnit
+*.VisualState.xml
+TestResult.xml
+nunit-*.xml
+
+# Build Results of an ATL Project
+[Dd]ebugPS/
+[Rr]eleasePS/
+dlldata.c
+
+# Benchmark Results
+BenchmarkDotNet.Artifacts/
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# StyleCop
+StyleCopReport.xml
+
+# Files built by Visual Studio
+*_i.c
+*_p.c
+*_h.h
+*.ilk
+*.meta
+*.obj
+*.iobj
+*.pch
+*.pdb
+*.ipdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.tmp_proj
+*_wpftmp.csproj
+*.log
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+
+# Chutzpah Test files
+_Chutzpah*
+
+# Visual C++ cache files
+ipch/
+*.aps
+*.ncb
+*.opendb
+*.opensdf
+*.sdf
+*.cachefile
+*.VC.db
+*.VC.VC.opendb
+
+# Visual Studio profiler
+*.psess
+*.vsp
+*.vspx
+*.sap
+
+# Visual Studio Trace Files
+*.e2e
+
+# TFS 2012 Local Workspace
+$tf/
+
+# Guidance Automation Toolkit
+*.gpState
+
+# ReSharper is a .NET coding add-in
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# TeamCity is a build add-in
+_TeamCity*
+
+# DotCover is a Code Coverage Tool
+*.dotCover
+
+# AxoCover is a Code Coverage Tool
+.axoCover/*
+!.axoCover/settings.json
+
+# Coverlet is a free, cross platform Code Coverage Tool
+coverage*.json
+coverage*.xml
+coverage*.info
+
+# Visual Studio code coverage results
+*.coverage
+*.coveragexml
+
+# NCrunch
+_NCrunch_*
+.*crunch*.local.xml
+nCrunchTemp_*
+
+# MightyMoose
+*.mm.*
+AutoTest.Net/
+
+# Web workbench (sass)
+.sass-cache/
+
+# Installshield output folder
+[Ee]xpress/
+
+# DocProject is a documentation generator add-in
+DocProject/buildhelp/
+DocProject/Help/*.HxT
+DocProject/Help/*.HxC
+DocProject/Help/*.hhc
+DocProject/Help/*.hhk
+DocProject/Help/*.hhp
+DocProject/Help/Html2
+DocProject/Help/html
+
+# Click-Once directory
+publish/
+
+# Publish Web Output
+*.[Pp]ublish.xml
+*.azurePubxml
+# Note: Comment the next line if you want to checkin your web deploy settings,
+# but database connection strings (with potential passwords) will be unencrypted
+*.pubxml
+*.publishproj
+
+# Microsoft Azure Web App publish settings. Comment the next line if you want to
+# checkin your Azure Web App publish settings, but sensitive information contained
+# in these scripts will be unencrypted
+PublishScripts/
+
+# NuGet Packages
+*.nupkg
+# NuGet Symbol Packages
+*.snupkg
+# The packages folder can be ignored because of Package Restore
+**/[Pp]ackages/*
+# except build/, which is used as an MSBuild target.
+!**/[Pp]ackages/build/
+# Uncomment if necessary however generally it will be regenerated when needed
+#!**/[Pp]ackages/repositories.config
+# NuGet v3's project.json files produces more ignorable files
+*.nuget.props
+*.nuget.targets
+
+# Microsoft Azure Build Output
+csx/
+*.build.csdef
+
+# Microsoft Azure Emulator
+ecf/
+rcf/
+
+# Windows Store app package directories and files
+AppPackages/
+BundleArtifacts/
+Package.StoreAssociation.xml
+_pkginfo.txt
+*.appx
+*.appxbundle
+*.appxupload
+
+# Visual Studio cache files
+# files ending in .cache can be ignored
+*.[Cc]ache
+# but keep track of directories ending in .cache
+!?*.[Cc]ache/
+
+# Others
+ClientBin/
+~$*
+*~
+*.dbmdl
+*.dbproj.schemaview
+*.jfm
+*.pfx
+*.publishsettings
+orleans.codegen.cs
+
+# Including strong name files can present a security risk
+# (https://github.com/github/gitignore/pull/2483#issue-259490424)
+#*.snk
+
+# Since there are multiple workflows, uncomment next line to ignore bower_components
+# (https://github.com/github/gitignore/pull/1529#issuecomment-104372622)
+#bower_components/
+
+# RIA/Silverlight projects
+Generated_Code/
+
+# Backup & report files from converting an old project file
+# to a newer Visual Studio version. Backup files are not needed,
+# because we have git ;-)
+_UpgradeReport_Files/
+Backup*/
+UpgradeLog*.XML
+UpgradeLog*.htm
+ServiceFabricBackup/
+*.rptproj.bak
+
+# SQL Server files
+*.mdf
+*.ldf
+*.ndf
+
+# Business Intelligence projects
+*.rdl.data
+*.bim.layout
+*.bim_*.settings
+*.rptproj.rsuser
+*- [Bb]ackup.rdl
+*- [Bb]ackup ([0-9]).rdl
+*- [Bb]ackup ([0-9][0-9]).rdl
+
+# Microsoft Fakes
+FakesAssemblies/
+
+# GhostDoc plugin setting file
+*.GhostDoc.xml
+
+# Node.js Tools for Visual Studio
+.ntvs_analysis.dat
+node_modules/
+
+# Visual Studio 6 build log
+*.plg
+
+# Visual Studio 6 workspace options file
+*.opt
+
+# Visual Studio 6 auto-generated workspace file (contains which files were open etc.)
+*.vbw
+
+# Visual Studio LightSwitch build output
+**/*.HTMLClient/GeneratedArtifacts
+**/*.DesktopClient/GeneratedArtifacts
+**/*.DesktopClient/ModelManifest.xml
+**/*.Server/GeneratedArtifacts
+**/*.Server/ModelManifest.xml
+_Pvt_Extensions
+
+# Paket dependency manager
+.paket/paket.exe
+paket-files/
+
+# FAKE - F# Make
+.fake/
+
+# CodeRush personal settings
+.cr/personal
+
+# Python Tools for Visual Studio (PTVS)
+__pycache__/
+*.pyc
+
+# Cake - Uncomment if you are using it
+# tools/**
+# !tools/packages.config
+
+# Tabs Studio
+*.tss
+
+# Telerik's JustMock configuration file
+*.jmconfig
+
+# BizTalk build output
+*.btp.cs
+*.btm.cs
+*.odx.cs
+*.xsd.cs
+
+# OpenCover UI analysis results
+OpenCover/
+
+# Azure Stream Analytics local run output
+ASALocalRun/
+
+# MSBuild Binary and Structured Log
+*.binlog
+
+# NVidia Nsight GPU debugger configuration file
+*.nvuser
+
+# MFractors (Xamarin productivity tool) working folder
+.mfractor/
+
+# Local History for Visual Studio
+.localhistory/
+
+# BeatPulse healthcheck temp database
+healthchecksdb
+
+# Backup folder for Package Reference Convert tool in Visual Studio 2017
+MigrationBackup/
+
+# Ionide (cross platform F# VS Code tools) working folder
+.ionide/
+
+# Fody - auto-generated XML schema
+FodyWeavers.xsd
+</file>
+
+<file path="App.axaml">
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="DockApp.Avalonia.App"
+             RequestedThemeVariant="Default">
+             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+
+    <Application.Styles>
+        <FluentTheme />
+    </Application.Styles>
+</Application>
+</file>
+
+<file path="App.axaml.cs">
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Markup.Xaml;
+
+namespace DockApp.Avalonia;
+
+public partial class App : Application
+{
+    public override void Initialize()
+    {
+        AvaloniaXamlLoader.Load(this);
+    }
+
+    public override void OnFrameworkInitializationCompleted()
+    {
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            desktop.MainWindow = new MainWindow();
+        }
+
+        base.OnFrameworkInitializationCompleted();
+    }
+}
+</file>
+
+<file path="app.manifest">
+<?xml version="1.0" encoding="utf-8"?>
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+  <!-- This manifest is used on Windows only.
+       Don't remove it as it might cause problems with window transparency and embedded controls.
+       For more details visit https://learn.microsoft.com/en-us/windows/win32/sbscs/application-manifests -->
+  <assemblyIdentity version="1.0.0.0" name="DockApp.Avalonia.Desktop"/>
+
+  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+    <application>
+      <!-- A list of the Windows versions that this application has been tested on
+           and is designed to work with. Uncomment the appropriate elements
+           and Windows will automatically select the most compatible environment. -->
+
+      <!-- Windows 10 -->
+      <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}" />
+    </application>
+  </compatibility>
+</assembly>
+</file>
+
+<file path="installer/DockApp.iis">
+#define MyAppName "DockApp"
+#define MyAppPublisher "lorik440"
+#define MyAppExeName "DockApp.Avalonia.exe"
+
+[Setup]
+AppId={{8B7F5E5A-5C4D-4B7E-9F24-D0B5A2E5D9C1}
+AppName={#MyAppName}
+AppVersion={#Version}
+AppPublisher={#MyAppPublisher}
+
+DefaultDirName={autopf}\DockApp
+DefaultGroupName=DockApp
+
+OutputDir=installer-output
+OutputBaseFilename=DockApp-Setup-v{#Version}
+
+Compression=lzma
+SolidCompression=yes
+
+ArchitecturesAllowed=x64compatible
+ArchitecturesInstallIn64BitMode=x64compatible
+
+PrivilegesRequired=admin
+
+UninstallDisplayIcon={app}\{#MyAppExeName}
+
+[Files]
+Source: "publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+[Icons]
+Name: "{group}\DockApp"; Filename: "{app}\{#MyAppExeName}"
+Name: "{autodesktop}\DockApp"; Filename: "{app}\{#MyAppExeName}"
+
+[Run]
+Filename: "{app}\{#MyAppExeName}"; Description: "Launch DockApp"; Flags: nowait postinstall skipifsilent
+</file>
+
+<file path="Program.cs">
+using System;
+using Avalonia;
+
+namespace DockApp.Avalonia;
+
+class Program
+{
+    [STAThread]
+    public static void Main(string[] args) => BuildAvaloniaApp()
+        .StartWithClassicDesktopLifetime(args);
+
+    // Avalonia configuration & platform options
+    public static AppBuilder BuildAvaloniaApp()
+        => AppBuilder.Configure<App>()
+            .UsePlatformDetect()
+            .With(new Win32PlatformOptions
+            {
+                WinUICompositionBackdropCornerRadius = 25f
+            })
+            .WithInterFont()
+            .LogToTrace();
+}
+</file>
+
+<file path="Services/AppActivityService.cs">
+using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+
+namespace DockApp.Avalonia.Services;
+
+public sealed class AppActivityService : IDisposable
+{
+    private const uint EVENT_SYSTEM_FOREGROUND = 0x0003;
+    private const uint WINEVENT_OUTOFCONTEXT = 0x0000;
+    private const uint WINEVENT_SKIPOWNPROCESS = 0x0002;
+
+    private readonly WinEventDelegate _eventDelegate;
+    private readonly int _currentProcessId;
+    private IntPtr _hook;
+    private string? _lastExecutablePath;
+
+    public AppActivityService()
+    {
+        _eventDelegate = OnForegroundWindowChanged;
+        _currentProcessId = Environment.ProcessId;
+    }
+
+    public event Action<ForegroundAppInfo>? ForegroundAppChanged;
+
+    public void Start()
+    {
+        if (_hook != IntPtr.Zero)
+            return;
+
+        _hook = SetWinEventHook(
+            EVENT_SYSTEM_FOREGROUND,
+            EVENT_SYSTEM_FOREGROUND,
+            IntPtr.Zero,
+            _eventDelegate,
+            0,
+            0,
+            WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
+    }
+
+    public void Dispose()
+    {
+        if (_hook == IntPtr.Zero)
+            return;
+
+        UnhookWinEvent(_hook);
+        _hook = IntPtr.Zero;
+    }
+
+    private void OnForegroundWindowChanged(
+        IntPtr hWinEventHook,
+        uint eventType,
+        IntPtr hwnd,
+        int idObject,
+        int idChild,
+        uint eventThread,
+        uint eventTime)
+    {
+        if (hwnd == IntPtr.Zero)
+            return;
+
+        GetWindowThreadProcessId(
+            hwnd,
+            out int processId);
+
+        if (processId == 0 || processId == _currentProcessId)
+            return;
+
+        try
+        {
+            using Process process = Process.GetProcessById(processId);
+
+            string? executablePath = process.MainModule?.FileName;
+
+            if (string.IsNullOrWhiteSpace(executablePath) ||
+                IsIgnoredProcess(process.ProcessName, executablePath) ||
+                string.Equals(
+                    executablePath,
+                    _lastExecutablePath,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            _lastExecutablePath = executablePath;
+
+            ForegroundAppChanged?.Invoke(new ForegroundAppInfo(
+                executablePath,
+                process.ProcessName,
+                process.MainModule?.FileVersionInfo.FileDescription,
+                process.MainModule?.FileVersionInfo.ProductName));
+        }
+        catch
+        {
+            // Some elevated or protected processes do not expose module details.
+        }
+    }
+
+    private static bool IsIgnoredProcess(
+        string processName,
+        string executablePath)
+    {
+        string name = processName.ToLowerInvariant();
+        string fileName = System.IO.Path.GetFileName(
+            executablePath).ToLowerInvariant();
+
+        return name is "explorer" or "cmd" or "powershell" or "pwsh" or
+                   "windowsterminal" or "conhost" or "openconsole" ||
+               fileName is "explorer.exe" or "cmd.exe" or "powershell.exe" or
+                   "pwsh.exe" or "windowsterminal.exe" or "conhost.exe" or
+                   "openconsole.exe";
+    }
+
+    private delegate void WinEventDelegate(
+        IntPtr hWinEventHook,
+        uint eventType,
+        IntPtr hwnd,
+        int idObject,
+        int idChild,
+        uint eventThread,
+        uint eventTime);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr SetWinEventHook(
+        uint eventMin,
+        uint eventMax,
+        IntPtr hmodWinEventProc,
+        WinEventDelegate lpfnWinEventProc,
+        uint idProcess,
+        uint idThread,
+        uint dwFlags);
+
+    [DllImport("user32.dll")]
+    private static extern bool UnhookWinEvent(
+        IntPtr hWinEventHook);
+
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(
+        IntPtr hWnd,
+        out int lpdwProcessId);
+}
+</file>
+
+<file path="Services/AppService.cs">
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Runtime.InteropServices;
+using Avalonia.Media.Imaging;
+using DockApp.Avalonia.Models;
+
+namespace DockApp.Avalonia.Services;
+
+public class AppService
+{
+    private static readonly Guid FOLDERID_AppsFolder =
+        new("1e87508d-89c2-42f0-8a7e-645a0f50ca58");
+
+    private const uint SHGDN_NORMAL = 0x00000000;
+    private const uint SHGDN_DESKTOPABSOLUTEPARSING = 0x80028000;
+
+    private const uint SHGFI_ICON = 0x000000100;
+    private const uint SHGFI_LARGEICON = 0x000000000;
+    private const uint SHGFI_PIDL = 0x000000008;
+
+    public List<AppInfo> GetApps()
+    {
+        var apps = new List<AppInfo>();
+
+        IntPtr appsFolderPidl = IntPtr.Zero;
+
+        try
+        {
+            int hr = SHParseDisplayName(
+                "shell:AppsFolder",
+                IntPtr.Zero,
+                out appsFolderPidl,
+                0,
+                IntPtr.Zero);
+
+            if (hr != 0 || appsFolderPidl == IntPtr.Zero)
+                return apps;
+
+            IntPtr shellFolderPtr;
+
+            hr = SHBindToObject(
+                IntPtr.Zero,
+                appsFolderPidl,
+                IntPtr.Zero,
+                typeof(IShellFolder).GUID,
+                out shellFolderPtr);
+
+            if (hr != 0 || shellFolderPtr == IntPtr.Zero)
+                return apps;
+
+            var shellFolder =
+                (IShellFolder)Marshal.GetObjectForIUnknown(shellFolderPtr);
+
+            Marshal.Release(shellFolderPtr);
+
+            uint enumFlags =
+                (uint)(SHCONTF.SHCONTF_FOLDERS |
+                       SHCONTF.SHCONTF_NONFOLDERS);
+
+            hr = shellFolder.EnumObjects(
+                IntPtr.Zero,
+                enumFlags,
+                out IEnumIDList enumIdList);
+
+            if (hr != 0 || enumIdList == null)
+                return apps;
+
+            IntPtr itemPidl;
+
+            while (enumIdList.Next(1, out itemPidl, out uint fetched) == 0
+                   && fetched == 1)
+            {
+                try
+                {
+                    string? name = GetDisplayName(
+                        shellFolder,
+                        itemPidl,
+                        SHGDN_NORMAL);
+
+                    string? parsingName = GetDisplayName(
+                        shellFolder,
+                        itemPidl,
+                        SHGDN_DESKTOPABSOLUTEPARSING);
+
+                    if (string.IsNullOrWhiteSpace(name) ||
+                        string.IsNullOrWhiteSpace(parsingName))
+                    {
+                        continue;
+                    }
+
+                    string appId = NormalizeAppId(parsingName);
+
+                    if (string.IsNullOrWhiteSpace(appId))
+                        continue;
+
+                    if (IsExcludedApp(name, appId))
+                        continue;
+
+                    apps.Add(new AppInfo
+                    {
+                        Id = appId,
+                        Name = name,
+                        Path = appId,
+                        ExecutablePath = GetExecutablePath(appId)
+                    });
+                }
+                finally
+                {
+                    Marshal.FreeCoTaskMem(itemPidl);
+                }
+            }
+
+            Marshal.ReleaseComObject(enumIdList);
+            Marshal.ReleaseComObject(shellFolder);
+
+            return apps
+                .GroupBy(app => app.Id, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.First())
+                .OrderBy(app => app.Name)
+                .ToList();
+        }
+        finally
+        {
+            if (appsFolderPidl != IntPtr.Zero)
+                Marshal.FreeCoTaskMem(appsFolderPidl);
+        }
+    }
+
+    private string? GetDisplayName(
+        IShellFolder folder,
+        IntPtr pidl,
+            uint flags)
+    {
+        try
+        {
+            int hr = folder.GetDisplayNameOf(
+                pidl,
+                flags,
+                out STRRET strret);
+
+            if (hr != 0)
+                return null;
+
+            char[] buffer = new char[512];
+
+            hr = StrRetToBufW(
+                ref strret,
+                pidl,
+                buffer,
+                (uint)buffer.Length);
+
+            if (hr == 0)
+            {
+                return new string(buffer)
+                    .TrimEnd('\0');
+            }
+
+            // STRRET_WSTR
+            if (strret.uType == 0)
+            {
+                if (strret.pOleStr == IntPtr.Zero)
+                    return null;
+
+                string? result =
+                    Marshal.PtrToStringUni(strret.pOleStr);
+
+                Marshal.FreeCoTaskMem(strret.pOleStr);
+
+                return result;
+            }
+
+            return null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private Bitmap? GetIcon(
+        IntPtr appsFolderPidl,
+        IntPtr pidl)
+    {
+        IntPtr iconHandle = IntPtr.Zero;
+
+        try
+        {
+            IntPtr pidlFull = ILCombine(
+                appsFolderPidl,
+                pidl);
+
+            if (pidlFull == IntPtr.Zero)
+                return null;
+
+            try
+            {
+                SHFILEINFO info = new();
+
+                IntPtr result = SHGetFileInfo(
+                    pidlFull,
+                    0,
+                    ref info,
+                    (uint)Marshal.SizeOf<SHFILEINFO>(),
+                    SHGFI_PIDL | SHGFI_ICON | SHGFI_LARGEICON);
+
+                if (result == IntPtr.Zero)
+                    return null;
+
+                iconHandle = info.hIcon;
+
+                if (iconHandle == IntPtr.Zero)
+                    return null;
+
+                using var iconStream =
+                    IconToPngStream(iconHandle);
+
+                return new Bitmap(iconStream);
+            }
+            finally
+            {
+                ILFree(pidlFull);
+            }
+        }
+        catch
+        {
+            return null;
+        }
+        finally
+        {
+            if (iconHandle != IntPtr.Zero)
+                DestroyIcon(iconHandle);
+        }
+    }
+
+    private System.IO.MemoryStream IconToPngStream(IntPtr hIcon)
+    {
+        using var icon = System.Drawing.Icon.FromHandle(hIcon);
+
+        using var bitmap = icon.ToBitmap();
+
+        var stream = new System.IO.MemoryStream();
+
+        bitmap.Save(
+            stream,
+            System.Drawing.Imaging.ImageFormat.Png);
+
+        stream.Position = 0;
+
+        return stream;
+    }
+
+    public void LaunchApp(AppInfo app)
+    {
+        if (string.IsNullOrWhiteSpace(app.Path))
+            return;
+
+        string launchPath = app.Path.StartsWith(
+            "shell:AppsFolder\\",
+            StringComparison.OrdinalIgnoreCase)
+            ? app.Path
+            : $@"shell:AppsFolder\{app.Path}";
+
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = "explorer.exe",
+            Arguments = $"\"{launchPath}\"",
+            UseShellExecute = true
+        });
+    }
+
+    private static string NormalizeAppId(string parsingName)
+    {
+        const string appsFolderPrefix = "shell:AppsFolder\\";
+
+        string result = parsingName.Trim();
+
+        if (result.StartsWith(
+            appsFolderPrefix,
+            StringComparison.OrdinalIgnoreCase))
+        {
+            result = result[appsFolderPrefix.Length..];
+        }
+
+        return result;
+    }
+
+    public void LoadIcons(
+        IReadOnlyCollection<AppInfo> apps)
+    {
+        if (apps.Count == 0)
+            return;
+
+        var appsById = apps
+            .Where(app => app.Icon is null)
+            .GroupBy(app => app.Id, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                group => group.Key,
+                group => group.First(),
+                StringComparer.OrdinalIgnoreCase);
+
+        if (appsById.Count == 0)
+            return;
+
+        IntPtr appsFolderPidl = IntPtr.Zero;
+
+        try
+        {
+            int hr = SHParseDisplayName(
+                "shell:AppsFolder",
+                IntPtr.Zero,
+                out appsFolderPidl,
+                0,
+                IntPtr.Zero);
+
+            if (hr != 0 || appsFolderPidl == IntPtr.Zero)
+                return;
+
+            hr = SHBindToObject(
+                IntPtr.Zero,
+                appsFolderPidl,
+                IntPtr.Zero,
+                typeof(IShellFolder).GUID,
+                out IntPtr shellFolderPtr);
+
+            if (hr != 0 || shellFolderPtr == IntPtr.Zero)
+                return;
+
+            var shellFolder =
+                (IShellFolder)Marshal.GetObjectForIUnknown(shellFolderPtr);
+
+            Marshal.Release(shellFolderPtr);
+
+            try
+            {
+                uint enumFlags =
+                    (uint)(SHCONTF.SHCONTF_FOLDERS |
+                           SHCONTF.SHCONTF_NONFOLDERS);
+
+                hr = shellFolder.EnumObjects(
+                    IntPtr.Zero,
+                    enumFlags,
+                    out IEnumIDList enumIdList);
+
+                if (hr != 0 || enumIdList == null)
+                    return;
+
+                try
+                {
+                    IntPtr itemPidl;
+
+                    while (appsById.Count > 0 &&
+                           enumIdList.Next(
+                               1,
+                               out itemPidl,
+                               out uint fetched) == 0 &&
+                           fetched == 1)
+                    {
+                        try
+                        {
+                            string? parsingName = GetDisplayName(
+                                shellFolder,
+                                itemPidl,
+                                SHGDN_DESKTOPABSOLUTEPARSING);
+
+                            if (string.IsNullOrWhiteSpace(parsingName))
+                                continue;
+
+                            string appId = NormalizeAppId(parsingName);
+
+                            if (!appsById.TryGetValue(
+                                    appId,
+                                    out AppInfo? app))
+                            {
+                                continue;
+                            }
+
+                            app.Icon = GetIcon(
+                                appsFolderPidl,
+                                itemPidl);
+
+                            appsById.Remove(appId);
+                        }
+                        finally
+                        {
+                            Marshal.FreeCoTaskMem(itemPidl);
+                        }
+                    }
+                }
+                finally
+                {
+                    Marshal.ReleaseComObject(enumIdList);
+                }
+            }
+            finally
+            {
+                Marshal.ReleaseComObject(shellFolder);
+            }
+        }
+        finally
+        {
+            if (appsFolderPidl != IntPtr.Zero)
+                Marshal.FreeCoTaskMem(appsFolderPidl);
+        }
+    }
+
+    private static string? GetExecutablePath(string appId)
+    {
+        if (appId.EndsWith(
+                ".exe",
+                StringComparison.OrdinalIgnoreCase) &&
+            System.IO.File.Exists(appId))
+        {
+            return appId;
+        }
+
+        return null;
+    }
+
+    private static bool IsExcludedApp(
+        string name,
+        string appId)
+    {
+        string normalizedName = NormalizeForFilter(name);
+        string normalizedId = NormalizeForFilter(appId);
+
+        string[] excluded =
+        [
+            "fileexplorer",
+            "windowsexplorer",
+            "commandprompt",
+            "cmd",
+            "powershell",
+            "windowsterminal",
+            "terminal",
+            "run",
+            "controlpanel",
+            "taskmanager",
+            "registryeditor",
+            "eventviewer",
+            "services",
+            "computer management",
+            "device manager"
+        ];
+
+        return excluded.Any(excludedValue =>
+            normalizedName == NormalizeForFilter(excludedValue) ||
+            normalizedId.Contains(
+                NormalizeForFilter(excludedValue),
+                StringComparison.Ordinal));
+    }
+
+    private static string NormalizeForFilter(string value)
+    {
+        return new string(
+            value
+                .Where(char.IsLetterOrDigit)
+                .Select(char.ToLowerInvariant)
+                .ToArray());
+    }
+
+    #region Native Methods
+
+    [DllImport(
+        "shell32.dll",
+        CharSet = CharSet.Unicode)]
+    private static extern int SHParseDisplayName(
+        string name,
+        IntPtr bindingContext,
+        out IntPtr pidl,
+        uint sfgaoIn,
+        IntPtr sfgaoOut);
+
+    [DllImport("shell32.dll")]
+    private static extern int SHBindToObject(
+        IntPtr parent,
+        IntPtr pidl,
+        IntPtr bindCtx,
+        [In] Guid riid,
+        out IntPtr ppv);
+
+    [DllImport("shell32.dll")]
+    private static extern IntPtr ILCombine(
+        IntPtr pidl1,
+        IntPtr pidl2);
+
+    [DllImport("shell32.dll")]
+    private static extern void ILFree(
+        IntPtr pidl);
+
+    [DllImport("shell32.dll")]
+    private static extern IntPtr SHGetFileInfo(
+        IntPtr pszPath,
+        uint dwFileAttributes,
+        ref SHFILEINFO psfi,
+        uint cbFileInfo,
+        uint uFlags);
+
+    [DllImport("user32.dll")]
+    private static extern bool DestroyIcon(
+        IntPtr hIcon);
+
+    [DllImport(
+    "shlwapi.dll",
+    CharSet = CharSet.Unicode)]
+    private static extern int StrRetToBufW(
+    ref STRRET pstr,
+    IntPtr pidl,
+    [Out]
+    char[] pszBuf,
+    uint cch);
+    #endregion
+
+    #region COM Interfaces
+
+    [ComImport]
+    [Guid("000214E6-0000-0000-C000-000000000046")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    private interface IShellFolder
+    {
+        void ParseDisplayName(
+            IntPtr hwnd,
+            IntPtr pbc,
+            [MarshalAs(UnmanagedType.LPWStr)]
+            string displayName,
+            ref uint pchEaten,
+            out IntPtr ppidl,
+            ref uint attributes);
+
+        int EnumObjects(
+            IntPtr hwnd,
+            uint grfFlags,
+            out IEnumIDList ppenumIDList);
+
+        void BindToObject(
+            IntPtr pidl,
+            IntPtr pbc,
+            ref Guid riid,
+            out IntPtr ppv);
+
+        void BindToStorage(
+            IntPtr pidl,
+            IntPtr pbc,
+            ref Guid riid,
+            out IntPtr ppv);
+
+        void CompareIDs(
+            IntPtr lParam,
+            IntPtr pidl1,
+            IntPtr pidl2);
+
+        void CreateViewObject(
+            IntPtr hwndOwner,
+            ref Guid riid,
+            out IntPtr ppv);
+
+        void GetAttributesOf(
+            uint cidl,
+            IntPtr apidl,
+            ref uint rgfInOut);
+
+        void GetUIObjectOf(
+            IntPtr hwndOwner,
+            uint cidl,
+            IntPtr apidl,
+            ref Guid riid,
+            IntPtr rgfReserved,
+            out IntPtr ppv);
+
+        int GetDisplayNameOf(
+            IntPtr pidl,
+            uint uFlags,
+            out STRRET lpName);
+
+        void SetNameOf(
+            IntPtr hwnd,
+            IntPtr pidl,
+            [MarshalAs(UnmanagedType.LPWStr)]
+            string name,
+            uint flags,
+            out IntPtr newPidl);
+    }
+
+    [ComImport]
+    [Guid("000214F2-0000-0000-C000-000000000046")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    private interface IEnumIDList
+    {
+        [PreserveSig]
+        int Next(
+            uint celt,
+            out IntPtr rgelt,
+            out uint pceltFetched);
+
+        void Skip(uint celt);
+
+        void Reset();
+
+        void Clone(out IEnumIDList ppenum);
+    }
+
+    #endregion
+
+    #region Native Structures
+
+    [StructLayout(LayoutKind.Explicit)]
+    private struct STRRET
+    {
+        [FieldOffset(0)]
+        public uint uType;
+
+        [FieldOffset(8)]
+        public IntPtr pOleStr;
+
+        [FieldOffset(8)]
+        public IntPtr pStr;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct SHFILEINFO
+    {
+        public IntPtr hIcon;
+
+        public int iIcon;
+
+        public uint dwAttributes;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+        public string szDisplayName;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 80)]
+        public string szTypeName;
+    }
+
+    [Flags]
+    private enum SHCONTF : uint
+    {
+        SHCONTF_FOLDERS = 0x0020,
+        SHCONTF_NONFOLDERS = 0x0040
+    }
+
+    #endregion
+}
+</file>
+
+<file path="Services/ForegroundAppInfo.cs">
+namespace DockApp.Avalonia.Services;
+
+public sealed record ForegroundAppInfo(
+    string ExecutablePath,
+    string ProcessName,
+    string? FileDescription,
+    string? ProductName);
+</file>
+
+<file path="Services/StartupService.cs">
+namespace DockApp.Avalonia.Services;
+
+using System;
+using System.Diagnostics;
+using Microsoft.Win32;
+
+public class StartupService
+{
+    private const string RunKeyPath =
+        @"Software\Microsoft\Windows\CurrentVersion\Run";
+
+    private const string AppName = "DockApp.Avalonia";
+
+    public void EnableStartup()
+    {
+        string? exePath = Environment.ProcessPath;
+
+        if (string.IsNullOrWhiteSpace(exePath))
+            return;
+
+        using RegistryKey? key = Registry.CurrentUser.OpenSubKey(
+            RunKeyPath,
+            writable: true);
+
+        key?.SetValue(
+            AppName,
+            $"\"{exePath}\"",
+            RegistryValueKind.String);
+    }
+
+    public void DisableStartup()
+    {
+        using RegistryKey? key = Registry.CurrentUser.OpenSubKey(
+            RunKeyPath,
+            writable: true);
+
+        key?.DeleteValue(
+            AppName,
+            throwOnMissingValue: false);
+    }
+
+    public bool IsStartupEnabled()
+    {
+        using RegistryKey? key = Registry.CurrentUser.OpenSubKey(
+            RunKeyPath,
+            writable: false);
+
+        string? value = key?.GetValue(AppName) as string;
+
+        return !string.IsNullOrWhiteSpace(value) &&
+               value.Contains(
+                   Process.GetCurrentProcess().ProcessName,
+                   StringComparison.OrdinalIgnoreCase);
+    }
+}
+</file>
+
+<file path="Services/UsageService.cs">
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
+using Avalonia;
+using DockApp.Avalonia.Models;
+
+namespace DockApp.Avalonia.Services;
+
+public class UsageService
+{
+    private readonly object _syncRoot = new();
+    private readonly string _settingsPath;
+    private DockSettings _settings;
+    private bool _hasUnsavedChanges;
+
+    public UsageService()
+    {
+        string appData = Environment.GetFolderPath(
+            Environment.SpecialFolder.LocalApplicationData);
+
+        string settingsFolder = Path.Combine(
+            appData,
+            "DockApp.Avalonia");
+
+        Directory.CreateDirectory(settingsFolder);
+
+        _settingsPath = Path.Combine(
+            settingsFolder,
+            "settings.json");
+
+        _settings = Load();
+    }
+
+    public void ApplyUsage(AppInfo app)
+    {
+        if (string.IsNullOrWhiteSpace(app.Id))
+            return;
+
+        lock (_syncRoot)
+        {
+            if (_settings.Apps.TryGetValue(app.Id, out AppUsage? usage))
+            {
+                app.LaunchCount = usage.LaunchCount;
+                app.LastUsed = usage.LastUsed;
+            }
+        }
+    }
+
+    public void RecordLaunch(AppInfo app)
+    {
+        if (string.IsNullOrWhiteSpace(app.Id))
+            return;
+
+        lock (_syncRoot)
+        {
+            if (!_settings.Apps.TryGetValue(app.Id, out AppUsage? usage))
+            {
+                usage = new AppUsage();
+                _settings.Apps[app.Id] = usage;
+            }
+
+            usage.Name = app.Name;
+            usage.LaunchCount++;
+            usage.LastUsed = DateTime.UtcNow;
+
+            app.LaunchCount = usage.LaunchCount;
+            app.LastUsed = usage.LastUsed;
+
+            _hasUnsavedChanges = true;
+        }
+    }
+
+    public void RecordForegroundUse(AppInfo app)
+    {
+        RecordLaunch(app);
+    }
+
+    public PixelPoint? GetSavedPosition()
+    {
+        lock (_syncRoot)
+        {
+            if (_settings.Window.X is null || _settings.Window.Y is null)
+                return null;
+
+            return new PixelPoint(
+                _settings.Window.X.Value,
+                _settings.Window.Y.Value);
+        }
+    }
+
+    public void SavePosition(PixelPoint position)
+    {
+        lock (_syncRoot)
+        {
+            if (_settings.Window.X == position.X &&
+                _settings.Window.Y == position.Y)
+            {
+                return;
+            }
+
+            _settings.Window.X = position.X;
+            _settings.Window.Y = position.Y;
+
+            _hasUnsavedChanges = true;
+        }
+    }
+
+    public void Flush()
+    {
+        lock (_syncRoot)
+        {
+            if (!_hasUnsavedChanges)
+                return;
+
+            Save();
+            _hasUnsavedChanges = false;
+        }
+    }
+
+    private DockSettings Load()
+    {
+        try
+        {
+            if (!File.Exists(_settingsPath))
+                return new DockSettings();
+
+            string json = File.ReadAllText(_settingsPath);
+
+            return JsonSerializer.Deserialize<DockSettings>(json) ??
+                   new DockSettings();
+        }
+        catch
+        {
+            return new DockSettings();
+        }
+    }
+
+    private void Save()
+    {
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = true
+        };
+
+        string json = JsonSerializer.Serialize(
+            _settings,
+            options);
+
+        File.WriteAllText(
+            _settingsPath,
+            json);
+    }
+
+    private sealed class DockSettings
+    {
+        public Dictionary<string, AppUsage> Apps { get; set; } = new();
+
+        public WindowSettings Window { get; set; } = new();
+    }
+
+    private sealed class AppUsage
+    {
+        public string Name { get; set; } = "";
+
+        public int LaunchCount { get; set; }
+
+        public DateTime LastUsed { get; set; }
+    }
+
+    private sealed class WindowSettings
+    {
+        public int? X { get; set; }
+
+        public int? Y { get; set; }
+    }
+}
+</file>
+
+<file path="Services/WindowService.cs">
+using System;
+using System.Runtime.InteropServices;
+
+namespace DockApp.Avalonia.Services;
+
+public class WindowService
+{
+    private static readonly IntPtr HwndBottom = new(1);
+
+    private const uint SWP_NOSIZE = 0x0001;
+    private const uint SWP_NOMOVE = 0x0002;
+    private const uint SWP_NOACTIVATE = 0x0010;
+
+    public void SendToBottom(IntPtr hwnd)
+    {
+        if (hwnd == IntPtr.Zero)
+            return;
+
+        SetWindowPos(
+            hwnd,
+            HwndBottom,
+            0,
+            0,
+            0,
+            0,
+            SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+    }
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool SetWindowPos(
+        IntPtr hWnd,
+        IntPtr hWndInsertAfter,
+        int x,
+        int y,
+        int cx,
+        int cy,
+        uint flags);
+}
+</file>
+
+<file path="Windows/NativeWindowHook.cs">
+using System;
+using System.Runtime.InteropServices;
+
+namespace DockApp.Avalonia;
+
+public sealed class NativeWindowHook
+{
+    private const uint WM_EXITSIZEMOVE = 0x0232;
+    private const uint WM_NCDESTROY = 0x0082;
+
+    private const int GWLP_WNDPROC = -4;
+
+    private IntPtr _hwnd;
+    private IntPtr _oldWndProc;
+    private WndProc? _newWndProc;
+
+    private delegate IntPtr WndProc(
+        IntPtr hWnd,
+        uint msg,
+        IntPtr wParam,
+        IntPtr lParam);
+
+    [DllImport(
+        "user32.dll",
+        EntryPoint = "SetWindowLongPtrW",
+        SetLastError = true)]
+    private static extern IntPtr SetWindowLongPtr(
+        IntPtr hWnd,
+        int nIndex,
+        IntPtr newProc);
+
+    [DllImport(
+        "user32.dll",
+        EntryPoint = "CallWindowProcW")]
+    private static extern IntPtr CallWindowProc(
+        IntPtr lpPrevWndFunc,
+        IntPtr hWnd,
+        uint msg,
+        IntPtr wParam,
+        IntPtr lParam);
+
+    public event Action? WindowMoveFinished;
+
+    public void Attach(IntPtr hwnd)
+    {
+        if (_hwnd != IntPtr.Zero)
+            return;
+
+        _hwnd = hwnd;
+
+        _newWndProc = WindowProc;
+
+        IntPtr newProc =
+            Marshal.GetFunctionPointerForDelegate(_newWndProc);
+
+        _oldWndProc = SetWindowLongPtr(
+            _hwnd,
+            GWLP_WNDPROC,
+            newProc);
+
+        if (_oldWndProc == IntPtr.Zero)
+        {
+            throw new InvalidOperationException(
+                $"Failed to subclass window. Win32 error: " +
+                $"{Marshal.GetLastWin32Error()}");
+        }
+    }
+
+    private IntPtr WindowProc(
+        IntPtr hWnd,
+        uint msg,
+        IntPtr wParam,
+        IntPtr lParam)
+    {
+        if (msg == WM_EXITSIZEMOVE)
+        {
+            WindowMoveFinished?.Invoke();
+        }
+
+        IntPtr result = CallWindowProc(
+            _oldWndProc,
+            hWnd,
+            msg,
+            wParam,
+            lParam);
+
+        return result;
+    }
+}
+</file>
+
+<file path="DockApp.Avalonia.csproj">
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+	  <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.1" />
+    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3">
+      <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+      <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+</Project>
+</file>
+
+<file path="MainWindow.axaml">
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:models="using:DockApp.Avalonia.Models"
+        x:Class="DockApp.Avalonia.MainWindow"
+        Title="DockApp.Avalonia"
+        WindowStartupLocation="Manual"
+        TransparencyLevelHint="AcrylicBlur"
+        Background="Transparent"
+        ShowInTaskbar="true"
+        PointerPressed="OnPointerPressed"
+        x:CompileBindings="False">
+
+    <Window.Styles>
+        <Style Selector="Button.dock-app-button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="10"/>
+        </Style>
+        <Style Selector="Button.dock-app-button:pointerover">
+            <Setter Property="Background" Value="#24FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#22FFFFFF"/>
+        </Style>
+        <Style Selector="Button.dock-app-button:pressed">
+            <Setter Property="Background" Value="#38FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#35FFFFFF"/>
+        </Style>
+    </Window.Styles>
+
+    <Border Padding="8"
+            CornerRadius="20"
+            Background="#15202028"
+            BorderBrush="#15FFFFFF"
+            BorderThickness="1">
+    
+        <ItemsControl ItemsSource="{Binding Apps}"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch">
+
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid Rows="2"
+                                 Columns="3"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+
+                        <Button Classes="dock-app-button"
+                                Padding="0"
+                                Margin="4,2"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"
+                                Tag="{Binding}"
+                                ToolTip.Tip="{Binding Name}"
+                                Click="OnAppButtonClick"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center">
+
+                            <Image Source="{Binding Icon}"
+                                   Width="24"
+                                   Height="24"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Stretch="Uniform"/>
+
+                        </Button>
+
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+
+        </ItemsControl>
+
+    </Border>
+
+</Window>
+</file>
+
+<file path="MainWindow.axaml.cs">
+using System;
+using Avalonia;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Threading;
+using DockApp.Avalonia.Services;
+using System.Collections.ObjectModel;
+using DockApp.Avalonia.Models;
+using System.Text;
+
+namespace DockApp.Avalonia;
+
+public partial class MainWindow : Window
+{
+    
+    private readonly NativeWindowHook _windowHook;
+    private readonly AppService _appService ;
+    private readonly UsageService _usageService ;
+    private readonly StartupService _startupService;
+    private readonly WindowService _windowService;
+    private readonly AppActivityService _activityService;
+    private readonly DispatcherTimer _rankingRefreshTimer;
+    private readonly DispatcherTimer _settingsFlushTimer;
+    private readonly object _appsSync = new();
+    private readonly List<AppInfo> _allApps = new();
+    private string? _lastRecordedAppId;
+    private DateTime _lastRecordedAtUtc;
+    private IntPtr _hwnd;
+
+    public ObservableCollection<AppInfo> Apps { get; } = new();
+
+    public MainWindow()
+    {
+        InitializeComponent();
+
+        DataContext = this;
+
+        _appService = new AppService();
+        _usageService = new UsageService();
+        _startupService = new StartupService();
+        _windowService = new WindowService();
+        _activityService = new AppActivityService();
+        _activityService.ForegroundAppChanged += OnForegroundAppChanged;
+        _rankingRefreshTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(30)
+        };
+        _rankingRefreshTimer.Tick += OnRankingRefreshTimerTick;
+        _settingsFlushTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(45)
+        };
+        _settingsFlushTimer.Tick += OnSettingsFlushTimerTick;
+
+        RestoreSavedPosition();
+
+        _windowHook = new NativeWindowHook();
+
+        Opened += OnWindowOpened;
+        Closed += OnWindowClosed;
+
+        Width = 200;
+        Height = 112;
+
+        CanResize = false;
+
+        WindowDecorations = WindowDecorations.None;
+
+        _startupService.EnableStartup();
+
+    }
+
+    private void OnWindowOpened(
+        object? sender,
+        EventArgs e)
+    {
+
+        var platformHandle = TryGetPlatformHandle();
+
+        if (platformHandle == null)
+            return;
+
+        _hwnd = platformHandle.Handle;
+
+        //movement hook to snap to grid after moving
+        _windowHook.WindowMoveFinished += SnapToGrid;
+        _windowHook.Attach(_hwnd);
+
+        _windowService.SendToBottom(_hwnd);
+
+        Position = DesktopGrid.ClampToVisibleWorkArea(
+            this,
+            Position);
+
+        _ = LoadAppsAsync();
+        _activityService.Start();
+    }
+
+    private async Task LoadAppsAsync()
+    {
+        var apps = await Task.Run(_appService.GetApps);
+
+        lock (_appsSync)
+        {
+            _allApps.Clear();
+
+            foreach (var app in apps)
+            {
+                _usageService.ApplyUsage(app);
+                _allApps.Add(app);
+            }
+        }
+
+        RefreshVisibleApps();
+        _ = LoadVisibleIconsAsync();
+    }
+
+    private void RefreshVisibleApps()
+    {
+        List<AppInfo> rankedApps = GetRankedApps();
+
+        lock (_appsSync)
+        {
+            var visibleIds = rankedApps
+                .Select(app => app.Id)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            foreach (AppInfo app in _allApps)
+            {
+                if (!visibleIds.Contains(app.Id))
+                {
+                    app.Icon?.Dispose();
+                    app.Icon = null;
+                }
+            }
+        }
+
+        Apps.Clear();
+
+        foreach (var app in rankedApps)
+        {
+            Apps.Add(app);
+        }
+    }
+
+    private async Task LoadVisibleIconsAsync()
+    {
+        List<AppInfo> visibleApps = GetRankedApps()
+            .Where(app => app.Icon is null)
+            .ToList();
+
+        if (visibleApps.Count == 0)
+            return;
+
+        await Task.Run(() => _appService.LoadIcons(visibleApps));
+
+        RefreshVisibleApps();
+    }
+
+    private List<AppInfo> GetRankedApps()
+    {
+        lock (_appsSync)
+        {
+            return _allApps
+                .OrderByDescending(app => app.LaunchCount)
+                .ThenByDescending(app => app.LastUsed)
+                .ThenBy(app => app.Name)
+                .Take(6)
+                .ToList();
+        }
+    }
+
+    private void RestoreSavedPosition()
+    {
+        PixelPoint? savedPosition = _usageService.GetSavedPosition();
+
+        Position = savedPosition ?? new PixelPoint(80, 80);
+    }
+    
+
+
+    private void OnPointerPressed(
+        object? sender,
+        PointerPressedEventArgs e)
+    {
+        if (e.Source is Button)
+            return;
+
+        if (e.GetCurrentPoint(this)
+            .Properties
+            .IsLeftButtonPressed)
+        {
+            BeginMoveDrag(e);
+        }
+    }
+
+    private void OnAppButtonClick(
+        object? sender,
+        global::Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: AppInfo app })
+            return;
+
+        RecordAppUse(app);
+        _appService.LaunchApp(app);
+
+        ScheduleRankingRefresh();
+
+        _windowService.SendToBottom(_hwnd);
+    }
+
+    private void OnWindowClosed(
+        object? sender,
+        EventArgs e)
+    {
+        _activityService.Dispose();
+        FlushSettingsNow();
+    }
+
+    private void OnForegroundAppChanged(ForegroundAppInfo foregroundApp)
+    {
+        AppInfo? app = FindMatchingInstalledApp(foregroundApp);
+
+        if (app is null)
+            return;
+
+        if (!RecordAppUse(app))
+            return;
+
+        global::Avalonia.Threading.Dispatcher.UIThread.Post(
+            ScheduleRankingRefresh);
+    }
+
+    private AppInfo? FindMatchingInstalledApp(ForegroundAppInfo foregroundApp)
+    {
+        string executableName = System.IO.Path.GetFileNameWithoutExtension(
+            foregroundApp.ExecutablePath);
+
+        string normalizedProcess = NormalizeForMatch(executableName);
+        string normalizedDescription = NormalizeForMatch(
+            foregroundApp.FileDescription ?? "");
+        string normalizedProduct = NormalizeForMatch(
+            foregroundApp.ProductName ?? "");
+
+        lock (_appsSync)
+        {
+            return _allApps
+                .Select(app => new
+                {
+                    App = app,
+                    Score = GetMatchScore(
+                        app,
+                        foregroundApp.ExecutablePath,
+                        normalizedProcess,
+                        normalizedDescription,
+                        normalizedProduct)
+                })
+                .Where(match => match.Score > 0)
+                .OrderByDescending(match => match.Score)
+                .Select(match => match.App)
+                .FirstOrDefault();
+        }
+    }
+
+    private bool RecordAppUse(AppInfo app)
+    {
+        DateTime now = DateTime.UtcNow;
+
+        if (string.Equals(
+                _lastRecordedAppId,
+                app.Id,
+                StringComparison.OrdinalIgnoreCase) &&
+            now - _lastRecordedAtUtc < TimeSpan.FromSeconds(2))
+        {
+            return false;
+        }
+
+        _usageService.RecordForegroundUse(app);
+        ScheduleSettingsFlush();
+        _lastRecordedAppId = app.Id;
+        _lastRecordedAtUtc = now;
+
+        return true;
+    }
+
+    private void ScheduleRankingRefresh()
+    {
+        _rankingRefreshTimer.Stop();
+        _rankingRefreshTimer.Start();
+    }
+
+    private void ScheduleSettingsFlush()
+    {
+        _settingsFlushTimer.Stop();
+        _settingsFlushTimer.Start();
+    }
+
+    private void OnRankingRefreshTimerTick(
+        object? sender,
+        EventArgs e)
+    {
+        _rankingRefreshTimer.Stop();
+        RefreshVisibleApps();
+        _ = LoadVisibleIconsAsync();
+    }
+
+    private void OnSettingsFlushTimerTick(
+        object? sender,
+        EventArgs e)
+    {
+        _settingsFlushTimer.Stop();
+        _usageService.Flush();
+    }
+
+    private void FlushSettingsNow()
+    {
+        _settingsFlushTimer.Stop();
+        _usageService.Flush();
+    }
+
+    private static int GetMatchScore(
+        AppInfo app,
+        string executablePath,
+        string normalizedProcess,
+        string normalizedDescription,
+        string normalizedProduct)
+    {
+        if (!string.IsNullOrWhiteSpace(app.ExecutablePath) &&
+            string.Equals(
+                app.ExecutablePath,
+                executablePath,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return 100;
+        }
+
+        string normalizedName = NormalizeForMatch(app.Name);
+        string normalizedId = NormalizeForMatch(app.Id);
+
+        if (normalizedName == normalizedProduct ||
+            normalizedName == normalizedDescription ||
+            normalizedName == normalizedProcess)
+        {
+            return 80;
+        }
+
+        if (ContainsUsefulMatch(normalizedId, normalizedProcess))
+            return 60;
+
+        if (ContainsUsefulMatch(normalizedName, normalizedProcess) ||
+            ContainsUsefulMatch(normalizedProcess, normalizedName))
+        {
+            return 40;
+        }
+
+        return 0;
+    }
+
+    private static bool ContainsUsefulMatch(
+        string value,
+        string candidate)
+    {
+        return candidate.Length >= 4 &&
+               value.Contains(candidate, StringComparison.Ordinal);
+    }
+
+    private static string NormalizeForMatch(string value)
+    {
+        var builder = new StringBuilder(value.Length);
+
+        foreach (char c in value)
+        {
+            if (char.IsLetterOrDigit(c))
+                builder.Append(char.ToLowerInvariant(c));
+        }
+
+        return builder.ToString();
+    }
+
+    private async void SnapToGrid()
+    {
+        var start = Position;
+
+        var target = DesktopGrid.SnapToVisibleWorkArea(
+            this,
+            start);
+
+        // Already at the correct position
+        if (start == target)
+            return;
+
+        const int duration = 120;
+        const int frames = 8;
+
+        for (int i = 1; i <= frames; i++)
+        {
+            double t = (double)i / frames;
+
+            // Ease-out curve
+            double eased = 1 - Math.Pow(1 - t, 3);
+
+            int x = (int)Math.Round(
+                start.X + (target.X - start.X) * eased);
+
+            int y = (int)Math.Round(
+                start.Y + (target.Y - start.Y) * eased);
+
+            Position = new PixelPoint(x, y);
+
+            await Task.Delay(duration / frames);
+        }
+
+        Position = target;
+        _usageService.SavePosition(Position);
+        _windowService.SendToBottom(_hwnd);
+    }
+}
+</file>
+
+<file path="Models/AppInfo.cs">
+using System;
+using Avalonia.Media.Imaging;
+
+namespace DockApp.Avalonia.Models;
+
+public class AppInfo
+{
+    public string Id { get; set; } = "";
+
+    public string Name { get; set; } = "";
+
+    public string Path { get; set; } = "";
+
+    public string? ExecutablePath { get; set; }
+
+    public Bitmap? Icon { get; set; } = null;
+
+    public int LaunchCount { get; set; }
+
+    public DateTime LastUsed { get; set; }
+
+}
+</file>
+
+<file path="Windows/DesktopGrid.cs">
+using System;
+using System.Runtime.InteropServices;
+using Avalonia;
+using Avalonia.Controls;
+
+namespace DockApp.Avalonia;
+
+public static class DesktopGrid
+{
+    // Windows desktop icon spacing at 100% DPI
+    private const int BaseCellWidth = 38;
+    private const int BaseCellHeight = 39;
+
+    public static int GetCellWidth(Window window)
+    {
+        return (int)Math.Round(
+            BaseCellWidth * GetScale(window));
+    }
+
+    public static int GetCellHeight(Window window)
+    {
+        return (int)Math.Round(
+            BaseCellHeight * GetScale(window));
+    }
+
+    private static double GetScale(Window window)
+    {
+        var screen =
+            window.Screens.ScreenFromWindow(window) ??
+            window.Screens.Primary;
+
+        if (screen == null)
+            return 1.0;
+
+        // Avalonia screen scaling.
+        return screen.Scaling;
+    }
+
+    public static PixelPoint SnapToVisibleWorkArea(
+        Window window,
+        PixelPoint position)
+    {
+        PixelRect workArea = GetWorkArea(
+            window,
+            position);
+
+        int windowWidth = Math.Max(
+            1,
+            (int)Math.Ceiling(window.Bounds.Width));
+
+        int windowHeight = Math.Max(
+            1,
+            (int)Math.Ceiling(window.Bounds.Height));
+
+        int minX = workArea.X;
+        int minY = workArea.Y;
+
+        int maxX = Math.Max(
+            minX,
+            workArea.Right - windowWidth);
+
+        int maxY = Math.Max(
+            minY,
+            workArea.Bottom - windowHeight);
+
+        int cellWidth = GetCellWidth(window);
+        int cellHeight = GetCellHeight(window);
+
+        int snappedX = SnapInsideRange(
+            position.X,
+            cellWidth,
+            minX,
+            maxX);
+
+        int snappedY = SnapInsideRange(
+            position.Y,
+            cellHeight,
+            minY,
+            maxY);
+
+        return new PixelPoint(
+            snappedX,
+            snappedY);
+    }
+
+    public static PixelPoint ClampToVisibleWorkArea(
+        Window window,
+        PixelPoint position)
+    {
+        PixelRect workArea = GetWorkArea(
+            window,
+            position);
+
+        int windowWidth = Math.Max(
+            1,
+            (int)Math.Ceiling(window.Bounds.Width));
+
+        int windowHeight = Math.Max(
+            1,
+            (int)Math.Ceiling(window.Bounds.Height));
+
+        int maxX = Math.Max(
+            workArea.X,
+            workArea.Right - windowWidth);
+
+        int maxY = Math.Max(
+            workArea.Y,
+            workArea.Bottom - windowHeight);
+
+        return new PixelPoint(
+            Math.Clamp(position.X, workArea.X, maxX),
+            Math.Clamp(position.Y, workArea.Y, maxY));
+    }
+
+    private static int SnapInsideRange(
+        int value,
+        int cellSize,
+        int min,
+        int max)
+    {
+        int snapped =
+            (int)Math.Round(
+                (double)(value - min) / cellSize)
+            * cellSize
+            + min;
+
+        return Math.Clamp(
+            snapped,
+            min,
+            max);
+    }
+
+    private static PixelRect GetWorkArea(
+        Window window,
+        PixelPoint position)
+    {
+        global::Avalonia.Platform.Screen? screen =
+            window.Screens.ScreenFromWindow(window) ??
+            window.Screens.ScreenFromPoint(position) ??
+            window.Screens.Primary;
+
+        return screen?.WorkingArea ?? new PixelRect(
+            0,
+            0,
+            1920,
+            1080);
+    }
+}
+</file>
+
+<file path="README.md">
+# DockApp
+
+A lightweight, adaptive Windows desktop launcher built with C# and Avalonia.
+
+DockApp provides a small, unobtrusive launcher that learns which applications you use most and dynamically keeps your most-used apps available for quick access.
+
+The project is designed to feel more like a native Windows desktop feature than a traditional standalone application.
+
+## Features
+
+- **Dynamic app ranking**
+  - Tracks application usage.
+  - Apps are ranked by launch count and most recent use.
+  - The six highest-ranked applications are displayed.
+
+- **Windows application discovery**
+  - Uses the Windows `AppsFolder` / Shell APIs to discover installed applications.
+  - Supports launching applications through Windows Shell.
+
+- **Foreground activity tracking**
+  - Monitors the application currently being used.
+  - Updates usage information when applications become active.
+
+- **Persistent usage data**
+  - Application usage statistics are saved locally.
+  - Usage data is restored when DockApp starts again.
+
+- **Persistent window position**
+  - Remembers where the DockApp window was placed.
+  - Restores the saved position on startup.
+
+- **Desktop-aware positioning**
+  - The window can be moved around the desktop.
+  - Movement is snapped to a desktop-style grid.
+  - The window is clamped to the visible Windows work area so it does not move outside the screen.
+
+- **Windows startup integration**
+  - DockApp registers itself to start with Windows.
+
+- **Minimal desktop presence**
+  - Borderless window.
+  - Hidden from the taskbar.
+  - Transparent background with an acrylic-style appearance.
+  - Designed to remain unobtrusive while sitting directly on the desktop.
+
+## Technology
+
+- **C#**
+- **.NET 10**
+- **Avalonia UI 12.1.1**
+- **XAML**
+- **Windows Shell APIs**
+- **Windows native APIs**
+- **System.Text.Json**
+
+The project targets Windows:
+
+```text
+net10.0-windows
+</file>
+
+</files>
