@@ -25,7 +25,7 @@ PrivilegesRequired=admin
 UninstallDisplayIcon={app}\{#MyAppExeName}
 
 [Files]
-Source: "publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\DockApp"; Filename: "{app}\{#MyAppExeName}"
