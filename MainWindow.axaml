@@ -6,7 +6,7 @@
         WindowStartupLocation="Manual"
         TransparencyLevelHint="AcrylicBlur"
         Background="Transparent"
-        ShowInTaskbar="true"
+        ShowInTaskbar="false"
         PointerPressed="OnPointerPressed"
         x:CompileBindings="False">
 

@@ -29,7 +29,6 @@ Source: "..\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs cr
 
 [Icons]
 Name: "{group}\DockApp"; Filename: "{app}\{#MyAppExeName}"
-Name: "{autodesktop}\DockApp"; Filename: "{app}\{#MyAppExeName}"
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "Launch DockApp"; Flags: nowait postinstall skipifsilent
