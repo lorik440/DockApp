@@ -47,7 +47,7 @@ jobs:
           Compress-Archive `
             -Path "publish\*" `
             -DestinationPath "DockApp-win-x64.zip"
-            
+
       - name: Install Inno Setup
         shell: pwsh
         run: |
@@ -60,10 +60,27 @@ jobs:
             "/DVersion=${{ steps.version.outputs.VERSION }}" `
             "installer\DockApp.iss"
 
+      - name: Verify build outputs
+        shell: pwsh
+        run: |
+          Write-Host "=== Publish ==="
+          Get-ChildItem publish
+
+          Write-Host "=== Installer ==="
+          $installer = "installer\installer-output\DockApp-Setup-v${{ steps.version.outputs.VERSION }}.exe"
+
+          if (-not (Test-Path $installer)) {
+              Write-Error "Installer not found: $installer"
+              exit 1
+          }
+
+          Write-Host "Installer found:"
+          Get-Item $installer
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
           files: |
             DockApp-win-x64.zip
-            installer-output/DockApp-Setup-v${{ steps.version.outputs.VERSION }}.exe
+            installer/installer-output/DockApp-Setup-v${{ steps.version.outputs.VERSION }}.exe
           generate_release_notes: true
