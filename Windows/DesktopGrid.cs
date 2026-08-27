@@ -1,40 +1,148 @@
 using System;
 using System.Runtime.InteropServices;
 using Avalonia;
+using Avalonia.Controls;
 
 namespace DockApp.Avalonia;
 
 public static class DesktopGrid
 {
-    private const int SM_CXICONSPACING = 38;
-    private const int SM_CYICONSPACING = 39;
+    // Windows desktop icon spacing at 100% DPI
+    private const int BaseCellWidth = 38;
+    private const int BaseCellHeight = 39;
 
-    [DllImport("user32.dll")]
-    private static extern int GetSystemMetrics(int nIndex);
-
-    public static int CellWidth =>
-        GetSystemMetrics(SM_CXICONSPACING);
-
-    public static int CellHeight =>
-        GetSystemMetrics(SM_CYICONSPACING);
-
-    public static int DockWidth =>
-        CellWidth * 3;
-
-    public static int DockHeight =>
-        CellHeight * 2;
-
-    public static int SnapX(int x)
+    public static int GetCellWidth(Window window)
     {
         return (int)Math.Round(
-            (double)x / CellWidth
-        ) * CellWidth;
+            BaseCellWidth * GetScale(window));
     }
 
-    public static int SnapY(int y)
+    public static int GetCellHeight(Window window)
     {
         return (int)Math.Round(
-            (double)y / CellHeight
-        ) * CellHeight;
+            BaseCellHeight * GetScale(window));
+    }
+
+    private static double GetScale(Window window)
+    {
+        var screen =
+            window.Screens.ScreenFromWindow(window) ??
+            window.Screens.Primary;
+
+        if (screen == null)
+            return 1.0;
+
+        // Avalonia screen scaling.
+        return screen.Scaling;
+    }
+
+    public static PixelPoint SnapToVisibleWorkArea(
+        Window window,
+        PixelPoint position)
+    {
+        PixelRect workArea = GetWorkArea(
+            window,
+            position);
+
+        int windowWidth = Math.Max(
+            1,
+            (int)Math.Ceiling(window.Bounds.Width));
+
+        int windowHeight = Math.Max(
+            1,
+            (int)Math.Ceiling(window.Bounds.Height));
+
+        int minX = workArea.X;
+        int minY = workArea.Y;
+
+        int maxX = Math.Max(
+            minX,
+            workArea.Right - windowWidth);
+
+        int maxY = Math.Max(
+            minY,
+            workArea.Bottom - windowHeight);
+
+        int cellWidth = GetCellWidth(window);
+        int cellHeight = GetCellHeight(window);
+
+        int snappedX = SnapInsideRange(
+            position.X,
+            cellWidth,
+            minX,
+            maxX);
+
+        int snappedY = SnapInsideRange(
+            position.Y,
+            cellHeight,
+            minY,
+            maxY);
+
+        return new PixelPoint(
+            snappedX,
+            snappedY);
+    }
+
+    public static PixelPoint ClampToVisibleWorkArea(
+        Window window,
+        PixelPoint position)
+    {
+        PixelRect workArea = GetWorkArea(
+            window,
+            position);
+
+        int windowWidth = Math.Max(
+            1,
+            (int)Math.Ceiling(window.Bounds.Width));
+
+        int windowHeight = Math.Max(
+            1,
+            (int)Math.Ceiling(window.Bounds.Height));
+
+        int maxX = Math.Max(
+            workArea.X,
+            workArea.Right - windowWidth);
+
+        int maxY = Math.Max(
+            workArea.Y,
+            workArea.Bottom - windowHeight);
+
+        return new PixelPoint(
+            Math.Clamp(position.X, workArea.X, maxX),
+            Math.Clamp(position.Y, workArea.Y, maxY));
+    }
+
+    private static int SnapInsideRange(
+        int value,
+        int cellSize,
+        int min,
+        int max)
+    {
+        int snapped =
+            (int)Math.Round(
+                (double)(value - min) / cellSize)
+            * cellSize
+            + min;
+
+        return Math.Clamp(
+            snapped,
+            min,
+            max);
+    }
+
+    private static PixelRect GetWorkArea(
+        Window window,
+        PixelPoint position)
+    {
+        global::Avalonia.Platform.Screen? screen =
+            window.Screens.ScreenFromWindow(window) ??
+            window.Screens.ScreenFromPoint(position) ??
+            window.Screens.Primary;
+
+        return screen?.WorkingArea ?? new PixelRect(
+            0,
+            0,
+            1920,
+            1080);
     }
 }

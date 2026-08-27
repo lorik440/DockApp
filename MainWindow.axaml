@@ -1,102 +1,77 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:models="using:DockApp.Avalonia.Models"
         x:Class="DockApp.Avalonia.MainWindow"
         Title="DockApp.Avalonia"
-        WindowStartupLocation="CenterScreen"
-        TransparencyLevelHint= "AcrylicBlur"
+        WindowStartupLocation="Manual"
+        TransparencyLevelHint="AcrylicBlur"
         Background="Transparent"
-        PointerPressed="OnPointerPressed">
+        ShowInTaskbar="true"
+        PointerPressed="OnPointerPressed"
+        x:CompileBindings="False">
 
-    <!-- Outer Border encapsulating the layout with native Padding -->
-    <Border Padding="13"
-            CornerRadius="15"
-            Background="#80101015"
-            BorderBrush="#30FFFFFF" 
+    <Window.Styles>
+        <Style Selector="Button.dock-app-button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="10"/>
+        </Style>
+        <Style Selector="Button.dock-app-button:pointerover">
+            <Setter Property="Background" Value="#24FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#22FFFFFF"/>
+        </Style>
+        <Style Selector="Button.dock-app-button:pressed">
+            <Setter Property="Background" Value="#38FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#35FFFFFF"/>
+        </Style>
+    </Window.Styles>
+
+    <Border Padding="8"
+            CornerRadius="20"
+            Background="#15202028"
+            BorderBrush="#15FFFFFF"
             BorderThickness="1">
+    
+        <ItemsControl ItemsSource="{Binding Apps}"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch">
 
-        
-            
-            <!-- Main Floating Glass Container -->
-            <Grid RowDefinitions="*,*"
-                    ColumnDefinitions="*,*,*"
-                    Margin="8">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid Rows="2"
+                                 Columns="3"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
 
-                <!-- Row 1 -->
-                <Border Grid.Row="0"
-                        Grid.Column="0"
-                        CornerRadius="12"
-                        Background="#20FFFFFF"
-                        Margin="4">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
 
-                    <TextBlock Text="App 1"
-                                Foreground="White"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"/>
-                </Border>
+                        <Button Classes="dock-app-button"
+                                Padding="0"
+                                Margin="4,2"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"
+                                Tag="{Binding}"
+                                ToolTip.Tip="{Binding Name}"
+                                Click="OnAppButtonClick"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center">
 
-                <Border Grid.Row="0"
-                        Grid.Column="1"
-                        CornerRadius="12"
-                        Background="#20FFFFFF"
-                        Margin="4">
+                            <Image Source="{Binding Icon}"
+                                   Width="24"
+                                   Height="24"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Stretch="Uniform"/>
 
-                     <TextBlock Text="App 1"
-                                Foreground="White"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"/>
+                        </Button>
 
-                </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
 
-                <Border Grid.Row="0"
-                        Grid.Column="2"
-                        CornerRadius="12"
-                        Background="#20FFFFFF"
-                        Margin="4">
+        </ItemsControl>
 
-                    <TextBlock Text="App 3"
-                                Foreground="White"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"/>
-                </Border>
-
-
-                <!-- Row 2 -->
-                <Border Grid.Row="1"
-                        Grid.Column="0"
-                        CornerRadius="12"
-                        Background="#20FFFFFF"
-                        Margin="4">
-
-                    <TextBlock Text="App 4"
-                                Foreground="White"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"/>
-                </Border>
-
-                <Border Grid.Row="1"
-                        Grid.Column="1"
-                        CornerRadius="12"
-                        Background="#20FFFFFF"
-                        Margin="4">
-
-                    <TextBlock Text="App 5"
-                                Foreground="White"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"/>
-                </Border>
-
-                <Border Grid.Row="1"
-                        Grid.Column="2"
-                        CornerRadius="12"
-                        Background="#20FFFFFF"
-                        Margin="4">
-
-                    <TextBlock Text="App 6"
-                                Foreground="White"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"/>
-                </Border>
-            </Grid>
-        
     </Border>
+
 </Window>
