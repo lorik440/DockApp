@@ -35,7 +35,7 @@ jobs:
       - name: Publish DockApp
         run: >
           dotnet publish
-          DockApp.Avalonia/DockApp.Avalonia.csproj
+          DockApp.Avalonia.csproj
           -c Release
           -r win-x64
           --self-contained true
