@@ -1,10 +1,60 @@
 
-### One change I deliberately made
+# DockApp
 
-I **didn't claim things that aren't actually implemented yet**. For example, I didn't say DockApp has CI/CD, installers, automatic updates, configurable themes, or a completed Windows-native integration because those aren't supported by the current repository.
+A lightweight, adaptive Windows desktop launcher built with C# and Avalonia.
 
-Your repo currently has only **3 commits**, so I think this style is better than making the README sound like a finished product. :contentReference[oaicite:2]{index=2}
+DockApp provides a small, unobtrusive launcher that learns which applications you use most and dynamically keeps your most-used apps available for quick access.
 
-Also, I would **not put a "Download" section in it yet**, because your repository currently doesn't have a published release shown on GitHub. :contentReference[oaicite:3]{index=3}
+The project is designed to feel more like a native Windows desktop feature than a traditional standalone application.
 
-If you paste this into `README.md`, it will give someone looking at the project a pretty accurate picture of what you've actually built right now.
+## Features
+
+- **Dynamic app ranking**
+  - Tracks application usage.
+  - Apps are ranked by launch count and most recent use.
+  - The six highest-ranked applications are displayed.
+
+- **Windows application discovery**
+  - Uses the Windows `AppsFolder` / Shell APIs to discover installed applications.
+  - Supports launching applications through Windows Shell.
+
+- **Foreground activity tracking**
+  - Monitors the application currently being used.
+  - Updates usage information when applications become active.
+
+- **Persistent usage data**
+  - Application usage statistics are saved locally.
+  - Usage data is restored when DockApp starts again.
+
+- **Persistent window position**
+  - Remembers where the DockApp window was placed.
+  - Restores the saved position on startup.
+
+- **Desktop-aware positioning**
+  - The window can be moved around the desktop.
+  - Movement is snapped to a desktop-style grid.
+  - The window is clamped to the visible Windows work area so it does not move outside the screen.
+
+- **Windows startup integration**
+  - DockApp registers itself to start with Windows.
+
+- **Minimal desktop presence**
+  - Borderless window.
+  - Hidden from the taskbar.
+  - Transparent background with an acrylic-style appearance.
+  - Designed to remain unobtrusive while sitting directly on the desktop.
+
+## Technology
+
+- **C#**
+- **.NET 10**
+- **Avalonia UI 12.1.1**
+- **XAML**
+- **Windows Shell APIs**
+- **Windows native APIs**
+- **System.Text.Json**
+
+The project targets Windows:
+
+```text
+net10.0-windows
