@@ -1,0 +1,69 @@
+name: Release DockApp
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and Release DockApp
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.x"
+
+      - name: Get version
+        id: version
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Publish DockApp
+        run: >
+          dotnet publish
+          DockApp.Avalonia/DockApp.Avalonia.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -o publish
+
+      - name: Create portable ZIP
+        shell: pwsh
+        run: |
+          Compress-Archive `
+            -Path "publish\*" `
+            -DestinationPath "DockApp-win-x64.zip"
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
+            "/DVersion=${{ steps.version.outputs.VERSION }}" `
+            "installer\DockApp.iss"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            DockApp-win-x64.zip
+            installer-output/DockApp-Setup-v${{ steps.version.outputs.VERSION }}.exe
+          generate_release_notes: true
