@@ -288,6 +288,9 @@ public partial class MainWindow : Window
 
     private void ScheduleRankingRefresh()
     {
+        RefreshVisibleApps();
+        _ = LoadVisibleIconsAsync();
+
         _rankingRefreshTimer.Stop();
         _rankingRefreshTimer.Start();
     }
@@ -358,6 +361,7 @@ public partial class MainWindow : Window
 
         return 0;
     }
+
 
     private static bool ContainsUsefulMatch(
         string value,
